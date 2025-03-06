@@ -1,0 +1,16 @@
+flowchart TD
+    Client[Client] -->|Upload CSV| A[FastAPI Server]
+    Client -->|Check Status| A
+    A -->|Save Request| B[MongoDB]
+    A -->|Queue Tasks| C[Redis Broker]
+    C --> D[Celery Workers]
+    D -->|Process Images| D
+    D -->|Update Status| B
+    D -->|Optional: Webhook| E[External System]
+    
+    subgraph "Backend System"
+    A
+    B
+    C
+    D
+    end
