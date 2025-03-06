@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  api:
+    build: .
+    container_name: image_processor_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+      - processed_images:/app/processed_images
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017
+      - MONGODB_DB_NAME=image_processor_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OUTPUT_IMAGE_DIR=/app/processed_images
+      - OUTPUT_IMAGE_BASE_URL=http://localhost:8000/images/
+      - WEBHOOK_ENABLED=false
+      - WEBHOOK_URL=
+    depends_on:
+      - mongo
+      - redis
+
+  worker:
+    build: .
+    container_name: image_processor_worker
+    command: celery -A celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+      - processed_images:/app/processed_images
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017
+      - MONGODB_DB_NAME=image_processor_db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OUTPUT_IMAGE_DIR=/app/processed_images
+      - OUTPUT_IMAGE_BASE_URL=http://localhost:8000/images/
+      - WEBHOOK_ENABLED=false
+      - WEBHOOK_URL=
+    depends_on:
+      - redis
+      - mongo
+      - api
+
+  mongo:
+    image: mongo:latest
+    container_name: image_processor_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:latest
+    container_name: image_processor_redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongo_data:
+  processed_images:

@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+celery
+pymongo
+python-multipart
+pillow
+requests
+pandas
+redis
+aiofiles
+python-dotenv
+cryptography
+pyOpenSSL
